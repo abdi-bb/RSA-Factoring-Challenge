@@ -1,33 +1,49 @@
-#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
 
-int main(int argc, char *argv[]) {
-    FILE *file;
-    char line[256];
-    long long int n;
+int main(int argc, char *argv[])
+{
+	FILE *stream;
+	char *line = NULL;
+	size_t len = 0;
+	long long flag = 1, div, rest, number, counter;
+	ssize_t nread;
 
-    if (argc < 2) {
-        printf("Usage: factors <file>\n");
-        return 1;
-    }
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <file>\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
 
-    file = fopen(argv[1], "r");
-    if (file == NULL) {
-        printf("Cannot open file %s\n", argv[1]);
-        return 1;
-    }
+	stream = fopen(argv[1], "r");
+	if (stream == NULL) {
+		perror("fopen");
+		exit(EXIT_FAILURE);
+	}
 
-    while (fgets(line, sizeof(line), file)) {
-        n = strtoll(line, NULL, 10);
+	while ((nread = getline(&line, &len, stream)) != -1) {
+		flag = 1, div = 2;
+		number = atoll(line);
+		if (number)
+		{
+			while (flag) {
+				rest = number % div;
+				if (!rest) {
+					counter = number / div;
+					printf("%lld=%lld*%lld\n", number, counter, div);
+					flag = 0;
+				}
+				div++;
+			}
+		}
+	}
 
-        for (long long int i = 2; i <= n / 2; i++) {
-            if (n % i == 0) {
-                printf("%lld=%lld*%lld\n", n, n / i, i);
-                break;
-            }
-        }
-    }
-
-    fclose(file);
-    return 0;
+	free(line);
+	fclose(stream);
+	exit(EXIT_SUCCESS);
 }
